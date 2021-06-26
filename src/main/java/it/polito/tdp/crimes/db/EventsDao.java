@@ -56,7 +56,7 @@ public class EventsDao {
 		}
 	}
 
-	public List<String> listBoxCate(){
+	public List<String> getCategorie(){
 		String sql = "SELECT distinct e.offense_category_id AS id "
 				+ "FROM `events` e "
 				+ "ORDER BY e.offense_category_id " ;
@@ -82,10 +82,10 @@ public class EventsDao {
 			return null ;
 		}
 	}
-	public List<Integer> listBoxAnno(){
+	public List<Integer> getAnni(){
 		String sql = "SELECT DISTINCT year(e.reported_date) AS anno "
 				+ "FROM `events` e "
-				+ "ORDER BY year(e.reported_date)  " ;
+				+ "ORDER BY year(e.reported_date) " ;
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
@@ -108,59 +108,64 @@ public class EventsDao {
 			return null ;
 		}
 	}
-	public List<String> getVertici(Integer anno,String categoria){
-		String sql = "SELECT distinct e.offense_type_id as id "
+
+	public void getVertici(Integer anno, String categoria, List<String> vertici){
+		String sql = "SELECT distinct e.offense_type_id AS id "
 				+ "FROM `events` e "
-				+ "WHERE year(e.reported_date)=? "
-				+ "AND e.offense_category_id=? "
-				+ " " ;
+				+ "WHERE YEAR(e.reported_date)=? "
+				+ "AND e.offense_category_id=? " ;
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
 			PreparedStatement st = conn.prepareStatement(sql) ;
 			st.setInt(1, anno);
-			st.setString(2,categoria);
+			st.setString(2, categoria);
 			
-			List<String> list = new ArrayList<>() ;
+			
 			
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				list.add(res.getString("id"));
+				if(!vertici.contains(res.getString("id")))
+				{
+					vertici.add(res.getString("id"));
+				}
+				
 			}
 			
 			conn.close();
-			return list ;
+			
 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return null ;
+			
 		}
 	}
-	public List<Adiacenza> getAdiacenze(Integer anno,String categoria,List<String> vertici){
-		String sql = "SELECT e1.offense_type_id as id1, e2.offense_type_id as id2, COUNT(distinct(e1.district_id)) AS peso "
+	public List<Adiacenza> getAdiacenze(Integer anno, String categoria, List<String> vertici){
+		String sql = "SELECT e1.offense_type_id AS id1, e2.offense_type_id AS id2, COUNT( DISTINCT e1.neighborhood_id) AS peso "
 				+ "FROM `events` e1,`events` e2 "
-				+ "WHERE YEAR(e1.reported_date)=YEAR(e2.reported_date) "
-				+ "AND YEAR(e1.reported_date)=? "
-				+ "AND e1.offense_category_id=e2.offense_category_id "
+				+ "WHERE e1.offense_category_id=e2.offense_category_id "
 				+ "AND e1.offense_category_id=? "
+				+ "AND YEAR(e1.reported_date)=YEAR(e2.reported_date) "
+				+ "AND YEAR(e1.reported_date)=? "
 				+ "AND e1.offense_type_id> e2.offense_type_id "
-				+ "AND e1.district_id=e2.district_id "
+				+ "AND e1.neighborhood_id=e2.neighborhood_id "
 				+ "GROUP BY e1.offense_type_id, e2.offense_type_id " ;
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
 			PreparedStatement st = conn.prepareStatement(sql) ;
-			st.setInt(1, anno);
-			st.setString(2,categoria);
+			st.setString(1, categoria);
+			st.setInt(2, anno);
+			
 			
 			List<Adiacenza> list = new ArrayList<>() ;
 			
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				if(vertici.contains(res.getString("id1"))&& vertici.contains(res.getString("id2")))
+				if(vertici.contains(res.getString("id1")) && vertici.contains(res.getString("id2")))
 				{
 					Adiacenza a=new Adiacenza(res.getString("id1"),res.getString("id2"),res.getInt("peso"));
 					list.add(a);

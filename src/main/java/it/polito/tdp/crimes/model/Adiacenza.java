@@ -1,6 +1,7 @@
 package it.polito.tdp.crimes.model;
 
 public class Adiacenza {
+
 	String id1;
 	String id2;
 	Integer peso;
@@ -30,8 +31,9 @@ public class Adiacenza {
 	}
 	@Override
 	public String toString() {
-		return id1 + " - " + id2 + " - " + peso;
+		return id1+" - "+id2+" - "+peso;
 	}
 	
-
+	
 }
+
