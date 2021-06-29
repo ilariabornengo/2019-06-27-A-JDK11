@@ -49,34 +49,47 @@ public class CrimesController {
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Crea grafo...\n");
-    	Integer anno=this.boxAnno.getValue();
     	String categoria=this.boxCategoria.getValue();
-    	this.model.creaGrafo(anno, categoria);
-    	txtResult.appendText("GRAFO CREATO!!\n");
-    	txtResult.appendText("# archi: "+this.model.getArchi()+"\n");
-    	txtResult.appendText("# vertici: "+this.model.getVertci()+"\n");
-    	txtResult.appendText("\n");
-    	Integer max=this.model.getPesoMax();
-    	List<Adiacenza> massimi=new ArrayList<Adiacenza>(this.model.getMax(anno, categoria, max));
-    	txtResult.appendText("IL PESO MAX E': "+max+" E GLI ARCHI CON TALE PESO SONO:\n");
-    	for(Adiacenza a:massimi)
+    	Integer anno=this.boxAnno.getValue();
+    	if(anno==null || categoria==null)
     	{
-    		txtResult.appendText(a.toString()+"\n");
+    		txtResult.appendText("compilare tutti i campi");
+    	}else
+    	{
+    		this.model.creaGrafo(anno, categoria);
+    		txtResult.appendText("grafo creato!\n");
+    		txtResult.appendText("# archi: "+this.model.getArchi()+"\n");
+    		txtResult.appendText("# vertici: "+this.model.getVertici()+"\n");
+    		int pesoM=this.model.getPesoMax();
+    		List<Adiacenza> ok=new ArrayList<Adiacenza>(this.model.massimi(anno, categoria, pesoM));
+    		txtResult.appendText("Il peso massimo è: "+pesoM+" e gli archi con tale peso sono:\n");
+    		for(Adiacenza a:ok)
+    		{
+    			txtResult.appendText(a.toString()+"\n");
+    		}
+    		this.boxArco.getItems().addAll(this.model.getArchiL(anno, categoria));
     	}
-    	this.boxArco.getItems().addAll(this.model.getAdiac(anno, categoria, max));
-    	}
+    }
+    	
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Calcola percorso...\n");
     	Adiacenza a=this.boxArco.getValue();
-    	List<String> best=new ArrayList<String>(this.model.getBest(a));
-    	txtResult.appendText("PERCORSO TROVATO CON PESO "+this.model.pesoMin+" FORMATO DA:\n");
-    	for(String s:best)
+    	if(a==null)
     	{
-    		txtResult.appendText(s+"\n");
+    		txtResult.appendText("inserire un valore!\n");
+    	}else
+    	{
+    		List<String> best=new ArrayList<String>(this.model.getCamminoBest(a));
+    		int pesoMin=this.model.pesoMin;
+    		txtResult.appendText("IL CAMMINO DI PESO MINIMO VALE : "+pesoMin+" ED E' COMPOSTO DA:\n");
+    		for(String s:best)
+    		{
+    			txtResult.appendText(s+"\n");
+    		}
     	}
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -92,7 +105,8 @@ public class CrimesController {
     
     public void setModel(Model model) {
     	this.model = model;
-    	this.boxCategoria.getItems().addAll(this.model.getCategorie());
-    	this.boxAnno.getItems().addAll(this.model.getAnno());
+    	this.boxAnno.getItems().addAll(this.model.anni());
+    	this.boxCategoria.getItems().addAll(this.model.categorie());
+    	
     }
 }

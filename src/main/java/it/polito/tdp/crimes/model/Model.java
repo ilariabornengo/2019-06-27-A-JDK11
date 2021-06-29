@@ -23,66 +23,61 @@ public class Model {
 		this.dao=new EventsDao();
 	}
 	
-	public List<Integer> getAnno()
-	{
-		return this.dao.getAnni();
-	}
-	public List<String> getCategorie()
-	{
-		return this.dao.getCategorie();
-	}
 	public void creaGrafo(Integer anno,String categoria)
 	{
 		this.vertici=new ArrayList<String>();
 		this.grafo=new SimpleWeightedGraph<String,DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		
 		//aggiungo i vertici
-		this.dao.getVertici(anno, categoria, vertici);
+		this.dao.getVertici(vertici, anno, categoria);
 		Graphs.addAllVertices(this.grafo, this.vertici);
 		
 		//aggiungo gli archi
-		for(Adiacenza a:this.dao.getAdiacenze(anno, categoria, vertici))
+		for(Adiacenza a:this.dao.getAdiacenze(vertici, anno, categoria))
 		{
-			if(this.grafo.vertexSet().contains(a.getId1()) && this.grafo.vertexSet().contains(a.getId2()))
+			if(this.grafo.vertexSet().contains(a.getS1()) && this.grafo.vertexSet().contains(a.getS2()))
 			{
-				Graphs.addEdge(this.grafo, a.getId1(), a.getId2(), a.getPeso());
+				Graphs.addEdge(this.grafo, a.getS1(), a.getS2(), a.getPeso());
 			}
 		}
 	}
-	public List<Adiacenza> getMax(Integer anno,String categoria, int pesoMax)
+	
+	public List<Adiacenza> getArchiL(Integer anno,String categoria)
 	{
-		List<Adiacenza> pesoM=new ArrayList<Adiacenza>();
-		for(Adiacenza a:this.dao.getAdiacenze(anno, categoria, vertici))
+		return this.dao.getAdiacenze(vertici, anno, categoria);
+	}
+	
+	public List<Adiacenza> massimi(Integer anno,String categoria,int pesoMax)
+	{
+		List<Adiacenza> ok=new ArrayList<Adiacenza>();
+		for(Adiacenza a:this.dao.getAdiacenze(vertici, anno, categoria))
 		{
 			if(a.getPeso()==pesoMax)
 			{
-				pesoM.add(a);
+				ok.add(a);
+			}
+		}
+		return ok;
+	}
+	
+	public int getPesoMax()
+	{
+		int pesoM=0;
+		for(DefaultWeightedEdge d:this.grafo.edgeSet())
+		{
+			int pesoA=(int) this.grafo.getEdgeWeight(d);
+			if(pesoA>pesoM)
+			{
+				pesoM=pesoA;
 			}
 		}
 		return pesoM;
 	}
-	public int getPesoMax()
-	{
-		int pesoMax=0;
-		for(DefaultWeightedEdge d:this.grafo.edgeSet())
-		{
-			int pesoA=(int) this.grafo.getEdgeWeight(d);
-			if(pesoA>pesoMax)
-			{
-				pesoMax=pesoA;
-			}
-		}
-		return pesoMax;
-	}
-	public List<Adiacenza> getAdiac(Integer anno,String categoria, int pesoMax)
-	{
-		return this.dao.getAdiacenze(anno, categoria, vertici);
-	}
 	
-	public List<String> getBest(Adiacenza a)
+	public List<String> getCamminoBest(Adiacenza a)
 	{
-		String partenza=a.getId1();
-		String arrivo=a.getId2();
+		String partenza=a.getS1();
+		String arrivo=a.getS2();
 		this.listaBest=new ArrayList<String>();
 		List<String> parziale=new ArrayList<String>();
 		this.pesoMin=Integer.MAX_VALUE;
@@ -93,17 +88,16 @@ public class Model {
 	
 	private void ricorsione(List<String> parziale, String arrivo) {
 		String ultimo=parziale.get(parziale.size()-1);
-		if(ultimo.equals(arrivo) && parziale.size()==this.grafo.vertexSet().size())
+		if(parziale.size()==this.grafo.vertexSet().size())
 		{
-			int pesoP=calcolaPeso(parziale);
-			if(pesoP<this.pesoMin)
+			int peso=calcolaPeso(parziale);
+			if(peso<this.pesoMin)
 			{
+				this.pesoMin=peso;
 				this.listaBest=new ArrayList<String>(parziale);
-				this.pesoMin=pesoP;
 				return;
 			}
 		}
-		
 		//fuori dal caso terminale
 		for(String s:Graphs.neighborListOf(this.grafo, ultimo))
 		{
@@ -115,21 +109,22 @@ public class Model {
 			}
 		}
 		
+		
 	}
 
 	private int calcolaPeso(List<String> parziale) {
-		int peso=0;
+		int pesoTot=0;
 		for(int i=1; i<parziale.size();i++)
 		{
 			String s1=parziale.get(i-1);
 			String s2=parziale.get(i);
-			int pesoU=(int) this.grafo.getEdgeWeight(this.grafo.getEdge(s1, s2));
-			peso+=pesoU;
+			int pesoA=(int) this.grafo.getEdgeWeight(this.grafo.getEdge(s1, s2));
+			pesoTot+=pesoA;
 		}
-		return peso;
+		return pesoTot;
 	}
 
-	public int getVertci()
+	public int getVertici()
 	{
 		return this.grafo.vertexSet().size();
 	}
@@ -137,5 +132,12 @@ public class Model {
 	{
 		return this.grafo.edgeSet().size();
 	}
-	
+	public List<String> categorie()
+	{
+		return this.dao.getCategorie();
+	}
+	public List<Integer> anni()
+	{
+		return this.dao.getAnni();
+	}
 }
